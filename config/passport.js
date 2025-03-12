@@ -1,9 +1,13 @@
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
+// const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const mongoose = require("mongoose");
 const User = require("../models/UserModel");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcrypt'); 
+
+require('dotenv').config();
+
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 // module.exports = function (passport) {
 passport.use(
