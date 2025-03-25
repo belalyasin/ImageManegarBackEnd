@@ -156,42 +156,88 @@ exports.deleteFolder = async (req, res) => {
 };
 
 //
+// exports.moveFolder = async (req, res) => {
+//   try {
+//     // Get folder ID from request parameters
+//     const { id } = req.params;
+//
+//     // Get new folder ID from request body
+//     const  folderId  = req.body.folderId;
+//     // const { folderId } = req.params.folderId;
+//     let folder;
+//     if (folderId) {
+//       folder = await FolderModel.findById(folderId);
+//       if (!folder) {
+//         return res.status(404).json({ message: "Folder not found" });
+//       }
+//     }
+//
+//     // Check if folder and folder IDs are valid ObjectIds
+//     if (!ObjectId.isValid(id) || !ObjectId.isValid(folderId)) {
+//       return res.status(400).json({ message: "Invalid ID" });
+//     }
+//
+//     // Find folder by ID and update folder ID
+//     const newFolder = await FolderModel.findByIdAndUpdate(
+//       { _id: id },
+//       { folder: folder ? folderId : null },
+//       { new: true }
+//     );
+//
+//     // Check if folder exists
+//     if (!newFolder) {
+//       return res.status(404).json({ message: "Folder not found" });
+//     }
+//
+//     // Send success response
+//     res.json({ message: "Folder moved to new folder", data: newFolder });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 exports.moveFolder = async (req, res) => {
   try {
     // Get folder ID from request parameters
     const { id } = req.params;
 
-    // Get new folder ID from request body
+    // Get new parent folder ID from request body
     const { folderId } = req.body;
-    let folder;
-    if (folderId) {
-      folder = await FolderModel.findById(req.params.folderId);
-      if (!folder) {
-        return res.status(404).json({ message: "Folder not found" });
-      }
+
+    // Validate ObjectIds before querying the database
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid folder ID" });
+    }
+    if (folderId && !ObjectId.isValid(folderId)) {
+      return res.status(400).json({ message: "Invalid new parent folder ID" });
     }
 
-    // Check if folder and folder IDs are valid ObjectIds
-    if (!ObjectId.isValid(id) || !ObjectId.isValid(folderId)) {
-      return res.status(400).json({ message: "Invalid ID" });
-    }
-
-    // Find folder by ID and update folder ID
-    const newFolder = await FolderModel.findByIdAndUpdate(
-      { _id: id },
-      { folder: folder ? folderId : null },
-      { new: true }
-    );
-
-    // Check if folder exists
-    if (!newFolder) {
+    // Check if the folder to be moved exists
+    const folderToMove = await FolderModel.findById(id);
+    if (!folderToMove) {
       return res.status(404).json({ message: "Folder not found" });
     }
 
-    // Send success response
-    res.json({ message: "Folder moved to new folder", data: newFolder });
+    // Check if the new parent folder exists (if provided)
+    if (folderId) {
+      const parentFolder = await FolderModel.findById(folderId);
+      if (!parentFolder) {
+        return res.status(404).json({ message: "New parent folder not found" });
+      }
+    }
+
+    // Update the folder's parent folder
+    const updatedFolder = await FolderModel.findByIdAndUpdate(
+        id,
+        { folder: folderId || null }, // Set to null if no folderId is provided
+        { new: true }
+    );
+
+    // Respond with success message
+    res.json({ message: "Folder moved successfully", data: updatedFolder });
   } catch (err) {
-    console.log(err);
+    console.error("Error moving folder:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 };
